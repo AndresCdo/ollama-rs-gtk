@@ -1,16 +1,20 @@
-use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Entry, TextView, ScrolledWindow, Orientation};
-use reqwest::blocking::ClientBuilder;
+use reqwest::Client;
 use serde_json::{json, Value};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::time::Duration;
+use tokio::runtime::Runtime;
+use glib::MainContext;
+use std::sync::Arc;
+
+use gtk::prelude::*;
 
 const OLLAMA_API_URL: &str = "http://localhost:11434/api/generate";
 const REQUEST_TIMEOUT: u64 = 10000; // Timeout in seconds
 
 async fn send_prompt(prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let client = ClientBuilder::new()
+    let client = Client::builder()
         .timeout(Duration::from_secs(REQUEST_TIMEOUT))
         .build()?;
 
@@ -20,9 +24,10 @@ async fn send_prompt(prompt: &str) -> Result<String, Box<dyn std::error::Error>>
             "prompt": prompt,
             "stream": false
         }))
-        .send()?;
+        .send()
+        .await?;
 
-    let json: Value = response.json()?;
+    let json: Value = response.json().await?;
     Ok(json["response"].as_str().unwrap_or("Error: No response").to_string())
 }
 
@@ -58,15 +63,25 @@ fn main() {
         let input_entry_clone = Rc::clone(&input_entry);
         let text_buffer_clone = Rc::clone(&text_buffer);
 
+        let main_context = MainContext::default();
+        let runtime = Arc::new(Runtime::new().unwrap());
+
         send_button.connect_clicked(move |_| {
             let prompt = input_entry_clone.borrow().text().to_string();
+            let prompt_clone = prompt.clone();
             if !prompt.is_empty() {
-                futures::executor::block_on(async {
-                    match send_prompt(&prompt).await {
+                let text_buffer_clone = Rc::clone(&text_buffer_clone);
+                let input_entry_clone = Rc::clone(&input_entry_clone);
+                let runtime = runtime.clone();
+
+                main_context.spawn_local(async move {
+                    match runtime.spawn(async move {
+                        send_prompt(&prompt).await.unwrap()
+                    }).await {
                         Ok(response) => {
                             let text_buffer = text_buffer_clone.borrow_mut();
                             let mut end_iter = text_buffer.end_iter();
-                            text_buffer.insert_markup(&mut end_iter, &format!("You: {}\n", prompt));
+                            text_buffer.insert_markup(&mut end_iter, &format!("You: {}\n", prompt_clone));
                             text_buffer.insert_markup(&mut end_iter, &format!("Ollama: {}\n", response));
                         },
                         Err(e) => {
@@ -75,7 +90,7 @@ fn main() {
                             text_buffer.insert_markup(&mut end_iter, &format!("Error: {}\n", e));
                         }
                     }
-                });                
+                });
                 input_entry_clone.borrow_mut().set_text("");
             }
         });
