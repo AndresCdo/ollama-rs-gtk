@@ -9,7 +9,7 @@ use std::time::Duration;
 const OLLAMA_API_URL: &str = "http://localhost:11434/api/generate";
 const REQUEST_TIMEOUT: u64 = 10000; // Timeout in seconds
 
-fn send_prompt(prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn send_prompt(prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
     let client = ClientBuilder::new()
         .timeout(Duration::from_secs(REQUEST_TIMEOUT))
         .build()?;
@@ -61,20 +61,22 @@ fn main() {
         send_button.connect_clicked(move |_| {
             let prompt = input_entry_clone.borrow().text().to_string();
             if !prompt.is_empty() {
-                match send_prompt(&prompt) {
-                    Ok(response) => {
-                        let text_buffer = text_buffer_clone.borrow_mut();
-                        let mut end_iter = text_buffer.end_iter();
-                        text_buffer.insert_markup(&mut end_iter, &format!("You: {}\n", prompt));
-                        text_buffer.insert_markup(&mut end_iter, &format!("Ollama: {}\n", response));
-                    },
-                    Err(e) => {
-                        let text_buffer = text_buffer_clone.borrow_mut();
-                        let mut end_iter = text_buffer.end_iter();
-                        text_buffer.insert_markup(&mut end_iter, &format!("Error: {}\n", e));
+                futures::executor::block_on(async {
+                    match send_prompt(&prompt).await {
+                        Ok(response) => {
+                            let text_buffer = text_buffer_clone.borrow_mut();
+                            let mut end_iter = text_buffer.end_iter();
+                            text_buffer.insert_markup(&mut end_iter, &format!("You: {}\n", prompt));
+                            text_buffer.insert_markup(&mut end_iter, &format!("Ollama: {}\n", response));
+                        },
+                        Err(e) => {
+                            let text_buffer = text_buffer_clone.borrow_mut();
+                            let mut end_iter = text_buffer.end_iter();
+                            text_buffer.insert_markup(&mut end_iter, &format!("Error: {}\n", e));
+                        }
                     }
-                }
-                input_entry_clone.borrow().set_text("");
+                });                
+                input_entry_clone.borrow_mut().set_text("");
             }
         });
 
