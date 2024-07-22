@@ -22,5 +22,14 @@ jobs:
           profile: minimal
           toolchain: stable
 
+      - name: Install pango
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpango1.0-dev
+
+      - name: Set PKG_CONFIG_PATH
+        run: |
+          echo "export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+
       - name: Build and test
         run: cargo build --verbose && cargo test --verbose
