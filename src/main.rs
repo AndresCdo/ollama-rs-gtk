@@ -11,16 +11,16 @@ use std::sync::{Arc, Mutex};
 use gtk::prelude::*;
 
 const OLLAMA_API_URL: &str = "http://localhost:11434/api/generate";
-const REQUEST_TIMEOUT: u64 = 10000; // Timeout in seconds
+const REQUEST_TIMEOUT: u64 = 10000;
 
-async fn send_prompt(prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn send_prompt(prompt: &str) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::builder()
         .timeout(Duration::from_secs(REQUEST_TIMEOUT))
         .build()?;
 
     let response = client.post(OLLAMA_API_URL)
         .json(&json!({
-            "model": "llama3",
+            "model": "llama3.1",
             "prompt": prompt,
             "stream": false
         }))
@@ -38,7 +38,7 @@ fn main() {
         let window = ApplicationWindow::new(app);
         window.set_title("Ollama Llama 3 Assistant");
         window.set_default_size(400, 300);
-        
+
         let hbox = gtk::Box::new(Orientation::Horizontal, 5);
         window.add(&hbox);
 
@@ -51,9 +51,6 @@ fn main() {
         let send_button = Button::with_label("Send");
         vbox.pack_start(&send_button, false, false, 0);
 
-        // Shared state to control button sensitivity across threads
-        let button_state = Arc::new(Mutex::new(send_button.clone()));
-
         let scrolled_window = ScrolledWindow::new(None::<&gtk::Adjustment>, None::<&gtk::Adjustment>);
         scrolled_window.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Automatic);
         vbox.pack_start(&scrolled_window, true, true, 0);
@@ -64,50 +61,51 @@ fn main() {
         scrolled_window.add(&text_view);
 
         let text_buffer = Rc::new(RefCell::new(text_view.buffer().unwrap()));
+        let button_state = Arc::new(Mutex::new(send_button.clone()));
+        let main_context = MainContext::default();
+        let runtime = Arc::new(Runtime::new().unwrap());
 
         let send_button_weak = send_button.downgrade();
         let input_entry_clone = Rc::clone(&input_entry);
         let text_buffer_clone = Rc::clone(&text_buffer);
 
-        let main_context = MainContext::default();
-        let runtime = Arc::new(Runtime::new().unwrap());
-
         send_button.connect_clicked(move |_| {
             let prompt = input_entry_clone.borrow().text().to_string();
-            let prompt_clone = prompt.clone();
 
-            let  button = button_state.lock().unwrap();
-            button.set_sensitive(false);
+            if prompt.is_empty() {
+                return;
+            }
+
+            let send_button = button_state.lock().unwrap();
+            send_button.set_sensitive(false);
 
             let button_state_clone = Arc::clone(&button_state);
+            let input_entry_clone = Rc::clone(&input_entry_clone);
+            let text_buffer_clone = Rc::clone(&text_buffer_clone);
+            let runtime = runtime.clone();
 
-            if !prompt.is_empty() {
-                let text_buffer_clone = Rc::clone(&text_buffer_clone);
-                let input_entry_clone = Rc::clone(&input_entry_clone);
-                let runtime = runtime.clone();
+            main_context.spawn_local(async move {
+                let prompt_clone = prompt.clone();
+                let response = runtime.spawn(async move {
+                    send_prompt(&prompt_clone).await
+                }).await;
 
-                main_context.spawn_local(async move {
-                    let button = button_state_clone.lock().unwrap();
-                    match runtime.spawn(async move {
-                        send_prompt(&prompt).await.unwrap()
-                    }).await {
-                        Ok(response) => {
-                            let text_buffer = text_buffer_clone.borrow_mut();
-                            let mut end_iter = text_buffer.end_iter();
-                            text_buffer.insert_markup(&mut end_iter, &format!("You: {}\n\n", prompt_clone));
-                            text_buffer.insert_markup(&mut end_iter, &format!("Ollama: {}\n\n", response));
-                        },
-                        Err(e) => {
-                            let text_buffer = text_buffer_clone.borrow_mut();
-                            let mut end_iter = text_buffer.end_iter();
-                            text_buffer.insert_markup(&mut end_iter, &format!("Error: {}\n\n", e));
-                        }
-                    }
+                let response_text = match response {
+                    Ok(Ok(response)) => response,
+                    Ok(Err(err)) => format!("Error: {}", err),
+                    Err(err) => format!("Error: {}", err),
+                };
 
-                    button.set_sensitive(true);
-                });
+                let text_buffer = text_buffer_clone.borrow_mut();
+                let mut end_iter = text_buffer.end_iter();
+                text_buffer.insert_markup(&mut end_iter, &format!("You: {}\n\n", prompt));
+                text_buffer.insert_markup(&mut end_iter, &format!("Ollama: {}\n\n", response_text));
+
+                let send_button = button_state_clone.lock().unwrap();
+                send_button.set_sensitive(true);
+
                 input_entry_clone.borrow_mut().set_text("");
-            }
+            });
         });
 
         input_entry.borrow().connect_activate(move |_| {
