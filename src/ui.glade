@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkApplicationWindow" id="main_window">
+    <property name="title">Ollama Chat</property>
+    <property name="default-width">400</property>
+    <property name="default-height">300</property>
+    <child>
+      <object class="GtkBox" id="main_box">
+        <property name="orientation">vertical</property>
+        <property name="spacing">10</property>
+        <property name="margin-left">10</property>
+        <property name="margin-right">10</property>
+        <property name="margin-top">10</property>
+        <property name="margin-bottom">10</property>
+        <child>
+          <object class="GtkEntry" id="input_entry">
+            <property name="placeholder-text">Enter text here</property>
+            <signal name="activate" handler="on_input_entry_activate" swapped="no"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="send_button">
+            <property name="label">Send</property>
+            <signal name="clicked" handler="on_send_button_clicked" swapped="no"/>
+          </object>
+        </child>
+        <child>
+          <!-- Scroll view -->
+          <object class="GtkScrolledWindow" id="scroll_view">
+            <property name="hscrollbar-policy">never</property>
+            <property name="vscrollbar-policy">always</property>
+            <property name="min-content-height">200</property>
+            <property name="min-content-width">400</property>
+            <property name="shadow-type">in</property>
+            <child>
+              <object class="GtkViewport" id="viewport">
+                <child>
+                  <object class="GtkTextView" id="text_view">
+                    <property name="editable">false</property>
+                    <property name="cursor-visible">false</property>
+                    <property name="wrap-mode">word</property>
+                    <property name="monospace">true</property>
+                    <property name="left-margin">10</property>
+                    <property name="right-margin">10</property>
+                    <property name="top-margin">10</property>
+                    <property name="bottom-margin">10</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
