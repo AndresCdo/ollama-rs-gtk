@@ -29,10 +29,9 @@
           <!-- Scroll view -->
           <object class="GtkScrolledWindow" id="scroll_view">
             <property name="hscrollbar-policy">never</property>
-            <property name="vscrollbar-policy">always</property>
-            <property name="min-content-height">200</property>
-            <property name="min-content-width">400</property>
+            <property name="vscrollbar-policy">automatic</property>
             <property name="shadow-type">in</property>
+            <property name="expand">true</property>
             <child>
               <object class="GtkViewport" id="viewport">
                 <child>
