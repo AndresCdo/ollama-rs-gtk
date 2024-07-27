@@ -1,4 +1,4 @@
-# Rust GTK App
+# Rust Ollama GTK
 
 This is a simple Rust application that uses the GTK library to create a graphical user interface. The app interacts with an API called Ollama Llama 3 to generate responses based on user prompts.
 
@@ -14,13 +14,13 @@ Before running the application, make sure you have the following installed:
 1. Clone the repository:
 
     ```shell
-    git clone https://github.com/AndresCdo/rust-gtk-app.git
+    git clone https://github.com/AndresCdo/rust-ollama-gtk.git
     ```
 
 2. Change to the project directory:
 
     ```shell
-    cd rust-gtk-app
+    cd rust-ollama-gtk
     ```
 
 3. Build the application:
