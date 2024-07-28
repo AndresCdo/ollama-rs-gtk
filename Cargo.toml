@@ -1,16 +1,24 @@
 [package]
-name = "rust-gtk-app"
-version = "0.1.0"
+name = "ollama-rs"
+version = "0.2.0"
+authors = ["Andres Caicedo <andrezz1997@gmail.com>"]
+description = "A simple GTK interface for Ollama."
+license = "MIT"
+repository = "@AndresCdo/ollama-rs"
 edition = "2018"
 
 [dependencies]
-gtk = "0.18.1"
-glib = "0.18.0"
+gio = "0.9"
+sourceview = "0.9"
+comrak = "0.8"
+horrorshow = "0.8"
+webkit2gtk = "0.10"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
+glib = "0.10.0"
 
-[[bin]]
-name = "rust-gtk-app"
-path = "src/main.rs"
+[dependencies.gtk]
+version = "0.9"
+features = ["v3_22"]
