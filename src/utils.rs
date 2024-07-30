@@ -95,13 +95,14 @@ pub fn configure_sourceview(buff: &Buffer) {
 macro_rules! clone {
     // Match `@strong` token and clone the variable
     (@strong $($n:ident),+ => move || $body:expr) => {
-        {
+        {   
+            let ($($n),+) = ($($n.clone()),+);
             $(let $n = $n.clone();)+
             move || $body
         }
     };
     (@strong $($n:ident),+ => move |$($p:pat),*| $body:expr) => {
-        {
+        {   
             $(let $n = $n.clone();)+
             move |$($p),*| $body
         }

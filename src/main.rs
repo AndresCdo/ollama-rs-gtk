@@ -65,7 +65,7 @@ fn build_system_menu(
 
     let quit = gio::SimpleAction::new("quit", None);
     let about = gio::SimpleAction::new("about", None);
-    quit.connect_activate(glib::clone!(@strong window => move |_, _| {
+    quit.connect_activate(clone!(@strong window => move |_, _| {
         window.close();
     }));
     about.connect_activate(clone!(@strong about_dialog => move |_, _| {
