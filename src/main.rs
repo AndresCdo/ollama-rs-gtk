@@ -141,7 +141,6 @@ fn build_ui(application: &gtk::Application) {
             let accel_group = AccelGroup::new();
             let window = Window::new(WindowType::Toplevel);
             window.add_accel_group(&accel_group);
-            send_button.set_parent(&window);
             send_button.set_sensitive(false);
             input_entry_clone.set_sensitive(false);
 
