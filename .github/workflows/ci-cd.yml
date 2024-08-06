@@ -43,11 +43,15 @@ jobs:
 
       - name: Run tests
         run: cargo test --verbose
+      
+      - name: List files
+        run: ls -R
 
-      - uses: actions/upload-artifact@v2
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: ollama-rs-gtk
-          path: target/debug/ollama-rs-gtk
+          path: target/
 
   release:
     needs: build
