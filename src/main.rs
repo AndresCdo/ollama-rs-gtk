@@ -65,7 +65,7 @@ fn build_system_menu(
 
     let quit = gio::SimpleAction::new("quit", None);
     let about = gio::SimpleAction::new("about", None);
-    quit.connect_activate(glib::clone!(@strong window => move |_, _| {
+    quit.connect_activate(clone!(@strong window => move |_, _| {
         window.close();
     }));
     about.connect_activate(clone!(@strong about_dialog => move |_, _| {
@@ -141,7 +141,6 @@ fn build_ui(application: &gtk::Application) {
             let accel_group = AccelGroup::new();
             let window = Window::new(WindowType::Toplevel);
             window.add_accel_group(&accel_group);
-            send_button.set_parent(&window);
             send_button.set_sensitive(false);
             input_entry_clone.set_sensitive(false);
 

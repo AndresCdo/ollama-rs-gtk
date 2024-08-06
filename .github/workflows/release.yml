@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Build project
+      run: cargo build --release
+
+    - name: Create release artifact
+      run: |
+        mkdir -p dist
+        cp target/release/ollama-rs-gtk dist/ollama-rs-gtk  # Adjust the filename as needed
+        tar -czvf dist/ollama-rs-gtk.tar.gz dist/ollama-rs-gtk
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ runner.os }}-v${{ github.run_number }}  # Use a dynamic tag name
+        release_name: Release ${{ github.run_number }}  # Use a dynamic release name
+        draft: false  # Set to 'true' for a draft release
+        prerelease: false  # Set to 'true' for a pre-release
+
+    - name: Generate release notes
+      run: cargo install cargo-release && cargo release notes -o release_notes.md
+
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/ollama-rs-gtk.tar.gz
+        asset_name: ollama-rs-gtk-${{ runner.os }}-${{ github.run_number }}.tar.gz
+        asset_content_type: application/gzip
+
+    - name: Upload release notes
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: release_notes.md
+        asset_name: release_notes.md
+        asset_content_type: text/markdown
