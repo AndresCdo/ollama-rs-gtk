@@ -44,26 +44,20 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
 
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ollama-rs-gtk
+          path: target/debug/ollama-rs-gtk
+
   release:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libpango1.0-dev \
-            libcairo2-dev \
-            libatk1.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libgtk-3-dev \
-            libsoup2.4-dev \
-            libjavascriptcoregtk-4.1-dev \
-            libwebkit2gtk-4.0-dev \
-            libgtksourceview-3.0-dev
+      - uses: actions/download-artifact@v2
+        with:
+          name: ollama-rs-gtk
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -71,14 +65,11 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Build project
-        run: cargo build --release
-
       - name: Create release artifact
         run: |
           mkdir -p dist
-          cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/target/release/ollama-rs-gtk.tar.gz dist/
-          tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk.tar.gz
+          cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/target/debug/ollama-rs-gtk dist/
+          tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk
 
       - name: Create GitHub Release
         id: create_release
@@ -89,9 +80,6 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Generate release notes
-        run: cargo install cargo-release && cargo release notes -o release_notes.md
-
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         with:
@@ -99,7 +87,7 @@ jobs:
           asset_path: dist/ollama-rs-gtk.tar.gz
           asset_name: ollama-rs-gtk-${{ runner.os }}-${{ github.run_number }}.tar.gz
           asset_content_type: application/gzip
-
+        
       - name: Upload release notes
         uses: actions/upload-release-asset@v1
         with:
