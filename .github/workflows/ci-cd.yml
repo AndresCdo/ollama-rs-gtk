@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ollama-rs-gtk
-          path: target/
+          path: target/debug/ollama-rs
 
   release:
     needs: build
@@ -72,7 +72,7 @@ jobs:
       - name: Create release artifact
         run: |
           mkdir -p dist
-          cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/target/debug/ollama-rs-gtk dist/
+          cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/target/debug/ollama-rs dist/
           tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk
 
       - name: Create GitHub Release
