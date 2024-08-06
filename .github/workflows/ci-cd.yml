@@ -77,8 +77,8 @@ jobs:
       - name: Create release artifact
         run: |
           mkdir -p dist
-          cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/target/release/ollama-rs-gtk dist/
-          tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk
+          cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/target/release/ollama-rs-gtk.tar.gz dist/
+          tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk.tar.gz
 
       - name: Create GitHub Release
         id: create_release
