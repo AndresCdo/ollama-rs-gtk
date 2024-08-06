@@ -1,84 +1,48 @@
-name: Docker Build and Push
+name: Release
 
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
-          - development
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
+    
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Build project
+      run: cargo build --release
 
-      - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create release artifact
+      run: |
+        mkdir -p dist
+        cp target/release/ollama-rs-gtk dist/ollama-rs-gtk  # Adjust the filename as needed
+        tar -czvf dist/ollama-rs-gtk.tar.gz dist/ollama-rs-gtk
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,format=long
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ runner.os }}-v${{ github.run_number }}  # Use a dynamic tag name
+        release_name: Release ${{ github.run_number }}
+        body: |
+          This release includes:
+          - ... (Add details about the release)
+        draft: false  # Set to 'true' for a draft release
+        prerelease: false  # Set to 'true' for a pre-release
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-      - name: Scan for vulnerabilities
-        uses: anchore/scan-action@v3
-        with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          fail-build: false
-          severity-cutoff: high
-
-      - name: Upload vulnerability report
-        uses: github/codeql-action/upload-sarif@v2
-        if: success() || failure()
-        with:
-          sarif_file: results.sarif
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/ollama-rs-gtk.tar.gz
+        asset_name: ollama-rs-gtk-${{ runner.os }}-${{ github.run_number }}.tar.gz
+        asset_content_type: application/gzip
