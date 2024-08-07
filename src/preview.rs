@@ -3,7 +3,6 @@
 // https://github.com/kivikakk/comrak
 use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions};
 
-use ammonia;
 use handlebars::Handlebars;
 use serde_json::json;
 
