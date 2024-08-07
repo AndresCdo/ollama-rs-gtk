@@ -30,8 +30,6 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Check formatting
         run: cargo fmt -- --check
-      - name: Run clippy
-        run: cargo clippy -- -D warnings
 
   test:
     needs: lint
@@ -68,6 +66,8 @@ jobs:
             libjavascriptcoregtk-4.1-dev \
             libwebkit2gtk-4.0-dev \
             libgtksourceview-3.0-dev
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
       - name: Build
         run: cargo build --verbose
       - name: Run tests
