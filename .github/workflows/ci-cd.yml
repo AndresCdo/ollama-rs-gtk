@@ -193,14 +193,14 @@ jobs:
           asset_name: release_notes.md
           asset_content_type: text/markdown
 
-  deploy:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          cname: ollama-rs.github.io
-          commit_message: Deploy to GitHub Pages
+  # deploy:
+  #   needs: release
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy to GitHub Pages
+  #       uses: peaceiris/actions-gh-pages@v3
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         publish_dir: ./dist
+  #         cname: ollama-rs.github.io
+  #         commit_message: Deploy to GitHub Pages
