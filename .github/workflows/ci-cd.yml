@@ -69,33 +69,33 @@ jobs:
       - name: List artifacts
         run: ls -l
 
-      # - name: Create release artifact
-      #   run: |
-      #     mkdir -p dist
-      #     cp /home/runner/work/ollama-rs-gtk/ollama-rs-gtk/ollama-rs dist/
-      #     tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk
+      - name: Create release artifact
+        run: |
+          mkdir -p dist
+          cp ollama-rs dist/
+          tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk
 
-      # - name: Create GitHub Release
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   with:
-      #     tag_name: ${{ github.ref_name }}
-      #     release_name: Release ${{ github.run_number }}
-      #     draft: false
-      #     prerelease: false
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: false
 
-      # - name: Upload release asset
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: dist/ollama-rs-gtk.tar.gz
-      #     asset_name: ollama-rs-gtk-${{ runner.os }}-${{ github.run_number }}.tar.gz
-      #     asset_content_type: application/gzip
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/ollama-rs-gtk.tar.gz
+          asset_name: ollama-rs-gtk-${{ runner.os }}-${{ github.run_number }}.tar.gz
+          asset_content_type: application/gzip
         
-      # - name: Upload release notes
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: release_notes.md
-      #     asset_name: release_notes.md
-      #     asset_content_type: text/markdown
+      - name: Upload release notes
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_notes.md
+          asset_name: release_notes.md
+          asset_content_type: text/markdown
