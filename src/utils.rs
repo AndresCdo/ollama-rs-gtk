@@ -1,12 +1,35 @@
 use std::fs::File;
-use std::io::BufReader;
 use std::io::prelude::*;
-
-use gtk::*;
-use sourceview::*;
+use std::io::BufReader;
+use std::path::Path;
 use std::path::PathBuf;
 
-pub fn set_title(header_bar: &HeaderBar, path: &PathBuf) {
+use gio::prelude::Cast;
+use gtk::prelude::TextBufferExt;
+use gtk::HeaderBar;
+use gtk::HeaderBarExt;
+use gtk::TextBuffer;
+use sourceview::prelude::BufferExt;
+use sourceview::LanguageManager;
+use sourceview::LanguageManagerExt;
+
+pub fn buffer_to_string(buffer: &TextBuffer) -> String {
+    let start_iter = buffer.get_start_iter();
+    let end_iter = buffer.get_end_iter();
+    buffer
+        .get_text(&start_iter, &end_iter, false)
+        .expect("Failed to get text from buffer")
+        .to_string()
+}
+
+pub fn save_file(filename: &PathBuf, text_buffer: &TextBuffer) {
+    let contents = buffer_to_string(text_buffer);
+    let mut file = File::create(filename).expect("Couldn't create file");
+    file.write_all(contents.as_bytes())
+        .expect("Couldn't write to file");
+}
+
+pub fn set_title(header_bar: &HeaderBar, path: &Path) {
     if let Some(file_name) = path.file_name() {
         let file_name: &str = &file_name.to_string_lossy();
         header_bar.set_title(Some(file_name));
@@ -18,13 +41,8 @@ pub fn set_title(header_bar: &HeaderBar, path: &PathBuf) {
     }
 }
 
-pub fn buffer_to_string(buffer: &Buffer) -> String {
-    let (start, end) = buffer.get_bounds();
-    buffer.get_text(&start, &end, false).unwrap().to_string()
-}
-
-pub fn open_file(filename: &PathBuf) -> String {
-    let file = File::open(&filename).expect("Couldn't open file");
+pub fn open_file(filename: &Path) -> String {
+    let file = File::open(filename).expect("Couldn't open file");
 
     let mut reader = BufReader::new(file);
     let mut contents = String::new();
@@ -33,76 +51,30 @@ pub fn open_file(filename: &PathBuf) -> String {
     contents
 }
 
-pub fn save_file(filename: &PathBuf, text_buffer: &Buffer) {
-    let contents = buffer_to_string(text_buffer);
-    let mut file = File::create(filename).expect("Couldn't save file");
-    file.write_all(contents.as_bytes()).expect("File save failed");
-}
-
-pub fn configure_sourceview(buff: &Buffer) {
-    LanguageManager::new()
+pub fn configure_sourceview(buffer: &gtk::TextBuffer) {
+    let language_manager = LanguageManager::get_default().expect("Failed to get language manager");
+    let language = language_manager
         .get_language("markdown")
-        .map(|markdown| buff.set_language(Some(&markdown)));
+        .expect("Failed to get language");
 
-    let manager = StyleSchemeManager::new();
-    manager
-        .get_scheme("classic")
-        .map(|theme| buff.set_style_scheme(Some(&theme)));
+    let buffer: &sourceview::Buffer = buffer
+        .downcast_ref()
+        .expect("Failed to downcast TextBuffer to Buffer");
+    buffer.set_language(Some(&language));
 }
 
-// http://gtk-rs.org/tuto/closures
-/// A macro for creating closures that capture variables by cloning them.
-///
-/// This macro provides a convenient way to create closures that capture variables by cloning them.
-/// It supports two syntaxes:
-///
-/// - `$($n:ident),+ => move || $body:expr`: Creates a closure that captures the variables `$n` by cloning them and has no parameters.
-/// - `$($n:ident),+ => move |$($p:tt),+| $body:expr`: Creates a closure that captures the variables `$n` by cloning them and has parameters specified by `$($p:tt),+`.
-///
-/// # Examples
-///
-/// ```
-/// # #[macro_use] extern crate my_macro;
-/// # fn main() {
-/// let x = 42;
-/// let closure = clone!(x => move || {
-///     println!("x: {}", x);
-/// });
-/// closure();
-/// # }
-/// ```
-///
-/// In this example, the `clone!` macro is used to create a closure that captures the variable `x` by cloning it.
-/// The closure takes no parameters and simply prints the value of `x`.
-///
-/// ```
-/// # #[macro_use] extern crate my_macro;
-/// # fn main() {
-/// let x = 42;
-/// let y = "hello".to_string();
-/// let closure = clone!(x, y => move |a: i32, b: String| {
-///     println!("x: {}, y: {}, a: {}, b: {}", x, y, a, b);
-/// });
-/// closure(10, "world".to_string());
-/// # }
-/// ```
-///
-/// In this example, the `clone!` macro is used to create a closure that captures the variables `x` and `y` by cloning them.
-/// The closure takes two parameters (`a` of type `i32` and `b` of type `String`) and prints the values of `x`, `y`, `a`, and `b`.
-///
-// utils.rs
 #[macro_export]
 macro_rules! clone {
     // Match `@strong` token and clone the variable
     (@strong $($n:ident),+ => move || $body:expr) => {
-        {   
+        {
             let ($($n),+) = ($($n.clone()),+);
             $(let $n = $n.clone();)+
             move || $body
         }
     };
     (@strong $($n:ident),+ => move |$($p:pat),*| $body:expr) => {
-        {   
+        {
             $(let $n = $n.clone();)+
             move |$($p),*| $body
         }
@@ -117,4 +89,50 @@ macro_rules! clone {
     ($($body:tt)*) => {
         $($body)*
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use glib::{MainContext, MainLoop};
+    use gtk::prelude::*;
+    use lazy_static::lazy_static;
+    use std::path::PathBuf;
+    use std::sync::Mutex;
+
+    use super::*;
+
+    lazy_static! {
+        static ref GTK_INIT: Mutex<()> = {
+            gtk::init().unwrap();
+            Mutex::new(())
+        };
+    }
+
+    #[tokio::test]
+    async fn test_buffer_to_string() {
+        if gtk::init().is_err() {
+            eprintln!("Failed to initialize GTK");
+            return;
+        }
+
+        let _guard = GTK_INIT.lock().unwrap();
+        let main_context = MainContext::default();
+        let main_loop = MainLoop::new(Some(&main_context), false);
+
+        main_context.spawn_local(clone!(@strong main_loop => async move {
+            let buffer = gtk::TextBuffer::new(None::<&gtk::TextTagTable>);
+            buffer.set_text("Hello, World!");
+            assert_eq!(buffer_to_string(&buffer), "Hello, World!");
+            main_loop.quit();
+        }));
+
+        main_loop.run();
+    }
+
+    #[test]
+    fn test_open_file() {
+        let filename = PathBuf::from("src/utils.rs");
+        let contents = open_file(&filename);
+        assert!(!contents.is_empty());
+    }
 }
