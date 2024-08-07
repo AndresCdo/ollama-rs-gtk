@@ -96,6 +96,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpango1.0-dev \
+            libcairo2-dev \
+            libatk1.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libgtk-3-dev \
+            libsoup2.4-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libwebkit2gtk-4.0-dev \
+            libgtksourceview-3.0-dev
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -114,6 +128,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpango1.0-dev \
+            libcairo2-dev \
+            libatk1.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libgtk-3-dev \
+            libsoup2.4-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libwebkit2gtk-4.0-dev \
+            libgtksourceview-3.0-dev
       - name: Download artifacts
         uses: actions/download-artifact@v2
       - name: Set up Rust
