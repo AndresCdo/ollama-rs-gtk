@@ -52,14 +52,14 @@ pub fn build_ui(application: &gtk::Application) {
 
     let file_open: gtk::FileChooserDialog = builder.get_object("file_open").unwrap();
     file_open.add_buttons(&[
-        ("Open", gtk::ResponseType::Ok.into()),
-        ("Cancel", gtk::ResponseType::Cancel.into()),
+        ("Open", gtk::ResponseType::Ok),
+        ("Cancel", gtk::ResponseType::Cancel),
     ]);
 
     let file_save: gtk::FileChooserDialog = builder.get_object("file_save").unwrap();
     file_save.add_buttons(&[
-        ("Save", gtk::ResponseType::Ok.into()),
-        ("Cancel", gtk::ResponseType::Cancel.into()),
+        ("Save", gtk::ResponseType::Ok),
+        ("Cancel", gtk::ResponseType::Cancel),
     ]);
 
     let about_dialog: gtk::AboutDialog = builder.get_object("about_dialog").unwrap();
@@ -131,7 +131,7 @@ pub fn build_ui(application: &gtk::Application) {
     open_button.connect_clicked(
         clone!(@strong file_open, header_bar, text_buffer => move |_| {
             file_open.show();
-            if file_open.run() == gtk::ResponseType::Ok.into() {
+            if file_open.run() == gtk::ResponseType::Ok {
                 if let Some(filename) = file_open.get_filename() {
                     set_title(&header_bar, &filename);
                     let contents = open_file(&filename);
@@ -144,7 +144,7 @@ pub fn build_ui(application: &gtk::Application) {
 
     save_button.connect_clicked(clone!(@strong file_save, text_buffer => move |_| {
         file_save.show();
-        if file_save.run() == gtk::ResponseType::Ok.into() {
+        if file_save.run() == gtk::ResponseType::Ok {
             if let Some(filename) = file_save.get_filename() {
                 save_file(&filename, &text_buffer);
             }
