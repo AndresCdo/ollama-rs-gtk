@@ -91,36 +91,36 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  docs:
-    needs: [test, security_audit]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libpango1.0-dev \
-            libcairo2-dev \
-            libatk1.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libgtk-3-dev \
-            libsoup2.4-dev \
-            libjavascriptcoregtk-4.1-dev \
-            libwebkit2gtk-4.0-dev \
-            libgtksourceview-3.0-dev
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: Generate documentation
-        run: cargo doc --no-deps
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./target/doc
+  # docs:
+  #   needs: [test, security_audit]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Install Linux dependencies
+  #       if: runner.os == 'Linux'
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y \
+  #           libpango1.0-dev \
+  #           libcairo2-dev \
+  #           libatk1.0-dev \
+  #           libgdk-pixbuf2.0-dev \
+  #           libgtk-3-dev \
+  #           libsoup2.4-dev \
+  #           libjavascriptcoregtk-4.1-dev \
+  #           libwebkit2gtk-4.0-dev \
+  #           libgtksourceview-3.0-dev
+  #     - name: Set up Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #     - name: Generate documentation
+  #       run: cargo doc --no-deps
+  #     - name: Deploy to GitHub Pages
+  #       uses: peaceiris/actions-gh-pages@v3
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         publish_dir: ./target/doc
 
   release:
     needs: [test, security_audit]
