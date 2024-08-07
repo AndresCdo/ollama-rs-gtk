@@ -110,17 +110,22 @@ mod tests {
 
     #[tokio::test]
     async fn test_buffer_to_string() {
+        if gtk::init().is_err() {
+            eprintln!("Failed to initialize GTK");
+            return;
+        }
+    
         let _guard = GTK_INIT.lock().unwrap();
         let main_context = MainContext::default();
         let main_loop = MainLoop::new(Some(&main_context), false);
-
+    
         main_context.spawn_local(clone!(@strong main_loop => async move {
             let buffer = gtk::TextBuffer::new(None::<&gtk::TextTagTable>);
             buffer.set_text("Hello, World!");
             assert_eq!(buffer_to_string(&buffer), "Hello, World!");
             main_loop.quit();
         }));
-
+    
         main_loop.run();
     }
 
