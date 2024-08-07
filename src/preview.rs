@@ -1,95 +1,15 @@
 // https://github.com/Stebalien/horrorshow-rs
-use horrorshow::{html, Raw};
-use horrorshow::helper::doctype;
 
 // https://github.com/kivikakk/comrak
-use comrak::{markdown_to_html, ComrakOptions, ComrakExtensionOptions, ComrakRenderOptions};
+use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions};
+
+use ammonia;
+use handlebars::Handlebars;
+use serde_json::json;
 
 // https://github.com/sindresorhus/github-markdown-css
 const GITHUB_CSS: &str = include_str!("github-markdown-dark.css");
-const HIGHLIGHT_CSS: &str = r#"
-.hljs {
-    display: block;
-    overflow-x: auto;
-    padding: 0.5em;
-    color: #abb2bf;
-    background: #282c34;
-}
-
-.hljs-comment, .hljs-quote {
-    color: #5c6370;
-    font-style: italic;
-}
-
-.hljs-keyword, .hljs-selector-tag, .hljs-subst {
-    color: #c678dd;
-    font-weight: bold;
-}
-
-.hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable, .hljs-tag .hljs-attr {
-    color: #d19a66;
-}
-
-.hljs-string, .hljs-doctag {
-    color: #98c379;
-}
-
-.hljs-title, .hljs-section, .hljs-selector-id {
-    color: #e06c75;
-    font-weight: bold;
-}
-
-.hljs-subst {
-    font-weight: normal;
-}
-
-.hljs-type, .hljs-class .hljs-title {
-    color: #e5c07b;
-    font-weight: bold;
-}
-
-.hljs-tag, .hljs-name, .hljs-attribute {
-    color: #61aeee;
-    font-weight: normal;
-}
-
-.hljs-regexp, .hljs-link {
-    color: #56b6c2;
-}
-
-.hljs-symbol, .hljs-bullet {
-    color: #d19a66;
-}
-
-.hljs-built_in, .hljs-builtin-name {
-    color: #e06c75;
-}
-
-.hljs-meta {
-    color: #abb2bf;
-    font-weight: bold;
-}
-
-.hljs-deletion {
-    background: #e06c75;
-    color: #282c34;
-}
-
-.hljs-addition {
-    background: #98c379;
-    color: #282c34;
-}
-
-.hljs-emphasis {
-    font-style: italic;
-}
-
-.hljs-strong {
-    font-weight: bold;
-}
-"#;
-
-
+const HIGHLIGHT_CSS: &str = include_str!("highlight.css");
 
 #[derive(Clone, Debug)]
 /// The `Preview` struct represents a markdown previewer.
@@ -128,30 +48,43 @@ impl Preview {
     ///
     /// The rendered HTML as a string.
     pub fn render(&self, markdown: &str) -> String {
-        format!(
-            "{}",
-            html!(
-                : doctype::HTML;
-                html {
-                    head {
-                        script(src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js") {}
-                        script(src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js") {}
-                        script {
-                            : Raw("hljs.initHighlightingOnLoad()")
-                        }
-                        style {
-                            : GITHUB_CSS;
-                            : HIGHLIGHT_CSS;
-                            : "body { width: 90%; margin: 0 auto; } img { max-width: 90% }";
-                        }
-                    }
-                    body {
-                        article(class="markdown-body") {
-                            : Raw(markdown_to_html(markdown, &self.comrak_options));
-                        }
-                    }
-                }
-            )
-        )
+        // Sanitize the input markdown
+        let sanitized_markdown = ammonia::clean(markdown);
+
+        // Use a HTML templating engine that automatically escapes input
+        let mut handlebars = Handlebars::new();
+        handlebars.register_template_string("page", r#"
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha384-ZeLYJ2PNSQjvogWP559CDAf02Qb8FE5OyQicqtz/+UhZutbrwyr87Be7NPH/RgyC" crossorigin="anonymous"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js" integrity="sha384-OBJOKgNdLyh0+KeF4HV9qlOEPvj6VyfuPSI/Yz+Tr2mOqwbRDqGsMtYlKz3tZkA" crossorigin="anonymous"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/bash.min.js" integrity="sha384-eQ7mmCQvBDl4XhA/Lxe6YfLK09TdqV3GBk9L3af17KsbqtWIrBjbvG/hzGSuJsO" crossorigin="anonymous"></script>
+                    <script>hljs.initHighlightingOnLoad();</script>
+                    <style>
+                        {{github_css}}
+                        {{highlight_css}}
+                        body { padding: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <article class="markdown-body">
+                        {{{content}}}
+                    </article>
+                </body>
+            </html>
+        "#).expect("Failed to register template");
+
+        let html_content = markdown_to_html(&sanitized_markdown, &self.comrak_options);
+
+        let data = json!({
+            "github_css": GITHUB_CSS,
+            "highlight_css": HIGHLIGHT_CSS,
+            "content": html_content
+        });
+
+        handlebars
+            .render("page", &data)
+            .unwrap_or_else(|_| "Rendering failed".to_string())
     }
 }
