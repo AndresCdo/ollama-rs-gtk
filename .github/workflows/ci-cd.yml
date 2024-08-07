@@ -73,7 +73,7 @@ jobs:
         run: |
           mkdir -p dist
           cp ollama-rs dist/
-          tar -czvf dist/ollama-rs-gtk.tar.gz -C dist ollama-rs-gtk
+          tar -czvf dist/ollama-rs-gtk.tar.gz dist/ollama-rs
 
       - name: Create GitHub Release
         id: create_release
