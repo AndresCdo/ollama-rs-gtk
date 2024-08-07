@@ -45,6 +45,8 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
+      - name: Install Clippy
+        run: rustup component add clippy --toolchain ${{ matrix.rust }}
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -167,7 +169,10 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to production
-        run: |
-          echo "Deploying to production server..."
-          # Add your deployment script or commands here
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          cname: ollama-rs.github.io
+          commit_message: Deploy to GitHub Pages
