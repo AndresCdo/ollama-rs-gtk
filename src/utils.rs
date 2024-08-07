@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::Path;
 use std::path::PathBuf;
 
 use gio::prelude::Cast;
@@ -23,12 +24,12 @@ pub fn buffer_to_string(buffer: &TextBuffer) -> String {
 
 pub fn save_file(filename: &PathBuf, text_buffer: &TextBuffer) {
     let contents = buffer_to_string(text_buffer);
-    let mut file = File::create(&filename).expect("Couldn't create file");
+    let mut file = File::create(filename).expect("Couldn't create file");
     file.write_all(contents.as_bytes())
         .expect("Couldn't write to file");
 }
 
-pub fn set_title(header_bar: &HeaderBar, path: &PathBuf) {
+pub fn set_title(header_bar: &HeaderBar, path: &Path) {
     if let Some(file_name) = path.file_name() {
         let file_name: &str = &file_name.to_string_lossy();
         header_bar.set_title(Some(file_name));
@@ -40,7 +41,7 @@ pub fn set_title(header_bar: &HeaderBar, path: &PathBuf) {
     }
 }
 
-pub fn open_file(filename: &PathBuf) -> String {
+pub fn open_file(filename: &Path) -> String {
     let file = File::open(&filename).expect("Couldn't open file");
 
     let mut reader = BufReader::new(file);
