@@ -17,6 +17,22 @@ pub struct Preview {
     comrak_options: ComrakOptions,
 }
 
+impl Default for Preview {
+    fn default() -> Self {
+        let comrak_render_options = ComrakRenderOptions {
+            hardbreaks: true,
+            ..ComrakRenderOptions::default()
+        };
+
+        let comrak_options = ComrakOptions {
+            render: comrak_render_options,
+            ..ComrakOptions::default()
+        };
+
+        Preview { comrak_options }
+    }
+}
+
 impl Preview {
     /// Creates a new `Preview` instance.
     pub fn new() -> Preview {
