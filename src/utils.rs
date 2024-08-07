@@ -42,7 +42,7 @@ pub fn set_title(header_bar: &HeaderBar, path: &Path) {
 }
 
 pub fn open_file(filename: &Path) -> String {
-    let file = File::open(&filename).expect("Couldn't open file");
+    let file = File::open(filename).expect("Couldn't open file");
 
     let mut reader = BufReader::new(file);
     let mut contents = String::new();
