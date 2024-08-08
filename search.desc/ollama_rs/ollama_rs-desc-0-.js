@@ -1,0 +1,1 @@
+searchState.loadedDescShard("ollama_rs", 0, "The <code>Preview</code> struct represents a markdown previewer.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCreates a new <code>Preview</code> instance.\nRenders the given markdown as HTML.")

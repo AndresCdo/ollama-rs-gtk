@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["buffer_to_string","configure_sourceview","open_file","save_file","set_title"]};
