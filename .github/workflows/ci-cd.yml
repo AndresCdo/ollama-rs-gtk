@@ -90,6 +90,18 @@ jobs:
         uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check audit results
+        run: |
+          audit_output=$(cargo audit --json)
+          echo "$audit_output"
+          if [[ $audit_output == *"\"found\":false"* ]]; then
+            echo "No vulnerabilities were found"
+          else
+            echo "Vulnerabilities were found"
+          fi
+          if [[ $audit_output == *"\"kind\":\"unmaintained\""* ]]; then
+            echo "Warning: Unmaintained packages were found"
+          fi
 
   # docs:
   #   needs: [test, security_audit]
