@@ -77,10 +77,11 @@ jobs:
       - name: Run benchmarks
         run: cargo bench
       - name: Archive artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ollama-rs-gtk-${{ matrix.os }}-${{ matrix.rust }}
           path: target/debug/ollama-rs
+          if-no-files-found: error
 
   security_audit:
     runs-on: ubuntu-latest
@@ -155,7 +156,7 @@ jobs:
             libwebkit2gtk-4.0-dev \
             libgtksourceview-3.0-dev
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
