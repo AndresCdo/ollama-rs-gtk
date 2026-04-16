@@ -6,6 +6,7 @@ on:
     paths:
       - Dockerfile.ci
       - .github/workflows/ci-image.yml
+      - .github/workflows/ci-cd.yml
   workflow_dispatch:
 
 permissions:
