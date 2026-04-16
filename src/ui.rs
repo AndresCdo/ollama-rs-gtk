@@ -1,8 +1,8 @@
 use crate::clone;
 use crate::menu::build_system_menu;
 use crate::preview::Preview;
-use gtk::{AccelGroup, Builder, Button, Entry, TextBuffer, Window, WindowType};
 use gtk::prelude::*;
+use gtk::{AccelGroup, Builder, Button, Entry, TextBuffer, Window, WindowType};
 use webkit2gtk::WebViewExt;
 
 use crate::api::send_prompt;
