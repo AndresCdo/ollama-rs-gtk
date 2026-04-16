@@ -1,6 +1,6 @@
-# Contributing to rust-ollama-gtk
+# Contributing to ollama-rs-gtk
 
-Thank you for considering contributing to rust-ollama-gtk! We welcome contributions from everyone. Here are some guidelines to help you get started.
+Thank you for considering contributing to ollama-rs-gtk! We welcome contributions from everyone. Here are some guidelines to help you get started.
 
 ## How to Contribute
 
@@ -12,7 +12,7 @@ Thank you for considering contributing to rust-ollama-gtk! We welcome contributi
 
 ## Reporting Bugs
 
-If you find a bug, please report it by opening an issue on the [GitHub repository](https://github.com/AndresCdo/rust-ollama-gtk). Include as much detail as possible to help us diagnose and fix the issue quickly.
+If you find a bug, please report it by opening an issue on the [GitHub repository](https://github.com/AndresCdo/ollama-rs-gtk). Include as much detail as possible to help us diagnose and fix the issue quickly.
 
 ## Pull Request Guidelines
 
@@ -25,15 +25,16 @@ If you find a bug, please report it by opening an issue on the [GitHub repositor
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/AndresCdo/rust-ollama-gtk.git
-   cd ollama-rs
+   git clone https://github.com/AndresCdo/ollama-rs-gtk.git
+   cd ollama-rs-gtk
    ```
-2. Install the required dependencies:
+2. Build the project:
    ```sh
    cargo build
    ```
 3. Run the tests to ensure everything is set up correctly:
    ```sh
    cargo test
-   ¸¸¸
+   ```
+
 We appreciate your contributions and look forward to working with you!

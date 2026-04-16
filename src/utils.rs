@@ -5,21 +5,19 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use gio::prelude::Cast;
-use gtk::prelude::TextBufferExt;
+use gtk::prelude::*;
 use gtk::HeaderBar;
-use gtk::HeaderBarExt;
 use gtk::TextBuffer;
-use sourceview::prelude::BufferExt;
-use sourceview::LanguageManager;
-use sourceview::LanguageManagerExt;
+use sourceview4::prelude::*;
+use sourceview4::LanguageManager;
 
 pub fn buffer_to_string(buffer: &TextBuffer) -> String {
-    let start_iter = buffer.get_start_iter();
-    let end_iter = buffer.get_end_iter();
+    let start_iter = buffer.start_iter();
+    let end_iter = buffer.end_iter();
     buffer
-        .get_text(&start_iter, &end_iter, false)
-        .expect("Failed to get text from buffer")
-        .to_string()
+        .text(&start_iter, &end_iter, false)
+        .map(|s| s.to_string())
+        .unwrap_or_default()
 }
 
 pub fn save_file(filename: &PathBuf, text_buffer: &TextBuffer) {
@@ -52,15 +50,14 @@ pub fn open_file(filename: &Path) -> String {
 }
 
 pub fn configure_sourceview(buffer: &gtk::TextBuffer) {
-    let language_manager = LanguageManager::get_default().expect("Failed to get language manager");
-    let language = language_manager
-        .get_language("markdown")
-        .expect("Failed to get language");
-
-    let buffer: &sourceview::Buffer = buffer
-        .downcast_ref()
-        .expect("Failed to downcast TextBuffer to Buffer");
-    buffer.set_language(Some(&language));
+    if let Some(language_manager) = LanguageManager::default() {
+        if let Some(language) = language_manager.language("markdown") {
+            let buffer: &sourceview4::Buffer = buffer
+                .downcast_ref()
+                .expect("Failed to downcast TextBuffer to Buffer");
+            buffer.set_language(Some(&language));
+        }
+    }
 }
 
 #[macro_export]

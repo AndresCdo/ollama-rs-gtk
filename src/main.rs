@@ -3,6 +3,7 @@
 use gio::prelude::*;
 
 mod api;
+mod config;
 mod menu;
 mod preview;
 mod ui;
@@ -21,8 +22,7 @@ async fn main() {
     let application = gtk::Application::new(
         Some("com.github.ollama-rs-gtk"),
         gio::ApplicationFlags::empty(),
-    )
-    .expect("Initialization failed...");
+    );
 
     application.connect_startup(move |app| {
         build_ui(app);
@@ -36,5 +36,5 @@ async fn main() {
 
     application.connect_activate(|_| {});
 
-    application.run(&std::env::args().collect::<Vec<_>>());
+    application.run();
 }
