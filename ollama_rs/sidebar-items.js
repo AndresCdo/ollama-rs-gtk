@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["AUTHORS","DESCRIPTION","NAME","OLLAMA_API_URL","REQUEST_TIMEOUT","VERSION"],"macro":["clone"],"mod":["api","menu","preview","ui","utils"]};
+window.SIDEBAR_ITEMS = {"constant":["AUTHORS","DESCRIPTION","NAME","VERSION"],"macro":["clone"],"mod":["api","config","menu","preview","ui","utils"]};

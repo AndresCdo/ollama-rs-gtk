@@ -1,0 +1,1 @@
+rd_("BlCreates a new <code>Preview</code> instance.AoReturns the argument unchanged.0BaCalls <code>U::from(self)</code>.0BcRenders the given markdown as HTML.D`The <code>Preview</code> struct represents a markdown previewer.")
