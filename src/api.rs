@@ -3,19 +3,20 @@ use reqwest::Client;
 use serde_json::{json, Value};
 use std::time::Duration;
 
-const OLLAMA_API_URL: &str = "http://localhost:11434/api/generate";
-const REQUEST_TIMEOUT: u64 = 10000;
+use crate::config::Config;
 
 pub async fn send_prompt(prompt: &str) -> Result<String> {
+    let config = Config::load().unwrap_or_default();
+
     let client = Client::builder()
-        .timeout(Duration::from_secs(REQUEST_TIMEOUT))
+        .timeout(Duration::from_secs(config.request_timeout))
         .build()
         .context("Failed to build HTTP client")?;
 
     let response = client
-        .post(OLLAMA_API_URL)
+        .post(&config.api_url)
         .json(&json!({
-            "model": "llama3.1",
+            "model": config.model,
             "prompt": prompt,
             "stream": false
         }))

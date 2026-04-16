@@ -3,6 +3,7 @@
 use gio::prelude::*;
 
 mod api;
+mod config;
 mod menu;
 mod preview;
 mod ui;

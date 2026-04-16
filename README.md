@@ -50,7 +50,15 @@ Ensure you have the following installed on your system:
 
 ## Configuration
 
-- To modify API endpoints or model parameters, edit the `config.toml` file in the project root.
+Create a `config.toml` file in the project root to override the defaults:
+
+```toml
+api_url = "http://localhost:11434/api/generate"
+model = "llama3.1"
+request_timeout = 10000
+```
+
+All fields are optional. If `config.toml` is missing, the app uses the defaults above.
 
 ## Contributing
 
