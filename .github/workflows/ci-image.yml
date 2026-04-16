@@ -1,0 +1,34 @@
+name: Build CI Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile.ci
+      - .github/workflows/ci-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.ci
+          push: true
+          tags: ghcr.io/andrescdo/ollama-rs-gtk-ci:latest

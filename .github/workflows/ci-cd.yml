@@ -13,6 +13,8 @@ env:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andrescdo/ollama-rs-gtk-ci:latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Rust
@@ -37,6 +39,8 @@ jobs:
         os: [ubuntu-latest]
         rust: [stable, nightly]
     runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/andrescdo/ollama-rs-gtk-ci:latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Rust
@@ -51,21 +55,6 @@ jobs:
             ~/.cargo
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pkg-config \
-            libpango1.0-dev \
-            libcairo2-dev \
-            libatk1.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libgtk-3-dev \
-            libsoup2.4-dev \
-            libjavascriptcoregtk-4.1-dev \
-            libwebkit2gtk-4.1-dev \
-            libgtksourceview-4-dev
       - name: Run clippy
         run: cargo clippy -- -D warnings
       - name: Build
@@ -105,23 +94,10 @@ jobs:
   docs:
     needs: [test, security_audit]
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andrescdo/ollama-rs-gtk-ci:latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pkg-config \
-            libpango1.0-dev \
-            libcairo2-dev \
-            libatk1.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libgtk-3-dev \
-            libsoup2.4-dev \
-            libjavascriptcoregtk-4.1-dev \
-            libwebkit2gtk-4.1-dev \
-            libgtksourceview-4-dev
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -138,23 +114,10 @@ jobs:
     needs: [test, security_audit]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andrescdo/ollama-rs-gtk-ci:latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pkg-config \
-            libpango1.0-dev \
-            libcairo2-dev \
-            libatk1.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libgtk-3-dev \
-            libsoup2.4-dev \
-            libjavascriptcoregtk-4.1-dev \
-            libwebkit2gtk-4.1-dev \
-            libgtksourceview-4-dev
       - name: Download artifacts
         uses: actions/download-artifact@v4
       - name: Set up Rust
