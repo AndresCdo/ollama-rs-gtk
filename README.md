@@ -18,6 +18,8 @@ Ensure you have the following installed on your system:
 
 - [Rust](https://www.rust-lang.org/tools/install) (latest stable version)
 - [GTK3](https://www.gtk.org/docs/installations/) (version 3.24 or higher)
+- GtkSourceView 4 development files (`libgtksourceview-4-dev` on Debian/Ubuntu)
+- WebKitGTK development files (`libwebkit2gtk-4.1-dev` on Debian/Ubuntu)
 - [Ollama](https://ollama.ai/download) (make sure the Ollama service is running)
 
 ## Installation
@@ -50,15 +52,39 @@ Ensure you have the following installed on your system:
 
 ## Configuration
 
-Create a `config.toml` file in the project root to override the defaults:
+The app works without a `config.toml`. If you want to override the defaults, copy
+[`config.toml.example`](config.toml.example) to `config.toml` in the project root.
+
+Default behavior:
+
+- Uses `http://localhost:11434/api/chat`
+- Uses the `llama3.1` model
+- Preserves chat history between messages while the app is open
+
+Example `config.toml`:
 
 ```toml
-api_url = "http://localhost:11434/api/generate"
+api_url = "http://localhost:11434/api"
 model = "llama3.1"
-request_timeout = 10000
+request_timeout_secs = 60
 ```
 
-All fields are optional. If `config.toml` is missing, the app uses the defaults above.
+Supported `api_url` values:
+
+- `http://localhost:11434/api` or `http://localhost:11434/api/chat` for chat mode with history
+- `http://localhost:11434/api/generate` for legacy stateless generation mode
+
+Timeout fields:
+
+- `request_timeout_secs` is preferred
+- `request_timeout_ms` is also supported
+- legacy `request_timeout` is treated as milliseconds for backward compatibility
+
+If Ollama returns `404`, the model is usually not installed locally yet. Pull it first, for example:
+
+```shell
+ollama pull llama3.1
+```
 
 ## Contributing
 
@@ -73,7 +99,9 @@ We welcome contributions! Please follow these steps:
 ## Troubleshooting
 
 - If you encounter GTK-related errors, ensure your GTK installation is correct and up-to-date.
-- For API issues, check your internet connection and verify that the Ollama service is running.
+- If the UI shows `model ... not found`, pull the model with `ollama pull <model>`.
+- If you use `ollama serve`, verify the app is pointing at `/api` or `/api/chat`, not an unsupported path.
+- For API issues, verify that the Ollama service is running and reachable at the configured URL.
 
 ## License
 

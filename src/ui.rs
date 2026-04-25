@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::clone;
 use crate::menu::build_system_menu;
 use crate::preview::Preview;
@@ -5,7 +8,7 @@ use gtk::prelude::*;
 use gtk::{AccelGroup, Builder, Button, Entry, TextBuffer, Window, WindowType};
 use webkit2gtk::WebViewExt;
 
-use crate::api::send_prompt;
+use crate::api::{send_prompt, ChatMessage};
 use crate::utils::{buffer_to_string, configure_sourceview, open_file, save_file, set_title};
 
 pub fn build_ui(application: &gtk::Application) {
@@ -71,18 +74,25 @@ pub fn build_ui(application: &gtk::Application) {
 
     web_view.connect_load_failed(|_, _, _, _| true);
 
+    let conversation_history = Rc::new(RefCell::new(Vec::<ChatMessage>::new()));
+
     send_button.connect_clicked({
         let send_button = send_button.clone();
         let text_buffer = text_buffer.clone();
         let input_entry_clone = input_entry.clone();
+        let conversation_history = conversation_history.clone();
         move |_| {
             let accel_group = AccelGroup::new();
             let window = Window::new(WindowType::Toplevel);
             window.add_accel_group(&accel_group);
+
+            let prompt = input_entry_clone.text().trim().to_string();
+            if prompt.is_empty() {
+                return;
+            }
+
             send_button.set_sensitive(false);
             input_entry_clone.set_sensitive(false);
-
-            let prompt = input_entry_clone.text().to_string();
 
             // Create a MainContext for async execution
             let main_context = glib::MainContext::default();
@@ -90,28 +100,60 @@ pub fn build_ui(application: &gtk::Application) {
                 let text_buffer = text_buffer.clone();
                 let send_button = send_button.clone();
                 let input_entry_clone = input_entry_clone.clone();
+                let conversation_history = conversation_history.clone();
                 async move {
-                    let result = send_prompt(&prompt).await;
+                    let current_history = conversation_history.borrow().clone();
+                    let result = send_prompt(&prompt, &current_history).await;
                     match result {
                         Ok(response) => {
                             // Ensure the GTK operations run on the main thread
-                            glib::MainContext::default().invoke_local(move || {
-                                let mut end_iter = text_buffer.end_iter();
-                                text_buffer.insert(&mut end_iter, &format!("You: {}\n\n", prompt));
-                                text_buffer
-                                    .insert(&mut end_iter, &format!("Ollama: {}\n\n", response));
-                                // Re-enable the UI elements
-                                send_button.set_sensitive(true);
-                                input_entry_clone.set_sensitive(true);
+                            glib::MainContext::default().invoke_local({
+                                let text_buffer = text_buffer.clone();
+                                let send_button = send_button.clone();
+                                let input_entry_clone = input_entry_clone.clone();
+                                let conversation_history = conversation_history.clone();
+                                let prompt = prompt.clone();
+                                let response = response.clone();
+                                move || {
+                                    {
+                                        let mut history = conversation_history.borrow_mut();
+                                        history.push(ChatMessage::user(&prompt));
+                                        history.push(ChatMessage::assistant(&response));
+                                    }
+
+                                    let mut end_iter = text_buffer.end_iter();
+                                    text_buffer
+                                        .insert(&mut end_iter, &format!("You: {}\n\n", prompt));
+                                    text_buffer.insert(
+                                        &mut end_iter,
+                                        &format!("Ollama: {}\n\n", response),
+                                    );
+                                    // Re-enable the UI elements
+                                    send_button.set_sensitive(true);
+                                    input_entry_clone.set_sensitive(true);
+                                    input_entry_clone.set_text("");
+                                }
                             });
                         }
                         Err(e) => {
-                            eprintln!("Error sending prompt: {}", e);
+                            let error = e.to_string();
+                            eprintln!("Error sending prompt: {}", error);
                             // Re-enable the UI elements in case of error
-                            glib::MainContext::default().invoke_local(clone!(move || {
-                                send_button.set_sensitive(true);
-                                input_entry_clone.set_sensitive(true);
-                            }));
+                            glib::MainContext::default().invoke_local({
+                                let text_buffer = text_buffer.clone();
+                                let send_button = send_button.clone();
+                                let input_entry_clone = input_entry_clone.clone();
+                                let prompt = prompt.clone();
+                                move || {
+                                    let mut end_iter = text_buffer.end_iter();
+                                    text_buffer
+                                        .insert(&mut end_iter, &format!("You: {}\n\n", prompt));
+                                    text_buffer
+                                        .insert(&mut end_iter, &format!("Error: {}\n\n", error));
+                                    send_button.set_sensitive(true);
+                                    input_entry_clone.set_sensitive(true);
+                                }
+                            });
                         }
                     }
                 }
